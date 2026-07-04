@@ -4,7 +4,7 @@
   "description": "Hosted installer and uninstaller script server for rpath.",
   "type": "module",
   "scripts": {
-    "check": "bun build src/index.js --target=node --outdir=.check",
+    "check": "bun build api/index.js --target=node --outdir=.check",
     "dev": "node src/index.js",
     "start": "node src/index.js",
     "format": "prettier --write .",
