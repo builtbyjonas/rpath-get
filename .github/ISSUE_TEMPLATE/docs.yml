@@ -1,0 +1,22 @@
+name: Documentation Issue
+description: Report missing, confusing, or incorrect docs.
+title: "docs: "
+labels: ["documentation"]
+body:
+  - type: input
+    id: file
+    attributes:
+      label: File or section
+      placeholder: README.md, SECURITY.md, install.ps1 flags
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What should change?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording

@@ -1,0 +1,31 @@
+name: Feature Request
+description: Suggest an installer service improvement.
+title: "feat: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What install, uninstall, or deployment workflow should be easier?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety expectations
+      options:
+        - label: This keeps installs user-local by default.
+          required: true
+        - label: This preserves checksum verification before binary installation.
+          required: true

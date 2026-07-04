@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check get server
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install
+      - run: bun run check
+      - run: sh -n scripts/install.sh
+      - run: sh -n scripts/uninstall.sh
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          [scriptblock]::Create((Get-Content -Raw scripts/install.ps1)) | Out-Null
+          [scriptblock]::Create((Get-Content -Raw scripts/uninstall.ps1)) | Out-Null

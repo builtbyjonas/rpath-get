@@ -1,0 +1,62 @@
+name: Bug Report
+description: Report incorrect get.rpath.dev behavior.
+title: "bug: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve the rpath installer service.
+  - type: dropdown
+    id: route
+    attributes:
+      label: Route or script
+      options:
+        - /install.sh
+        - /install.ps1
+        - /uninstall.sh
+        - /uninstall.ps1
+        - /healthz
+        - Vercel deployment
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: architecture
+    attributes:
+      label: Architecture
+      placeholder: x86_64, arm64, aarch64
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include the exact command you ran.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: Paste installer, uninstaller, or server output if safe to share.
+      render: text
