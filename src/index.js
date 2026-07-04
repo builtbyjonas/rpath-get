@@ -1,45 +1,54 @@
 import express from "express";
-import { readFile } from "node:fs/promises";
-import { dirname, join } from "node:path";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const app = express();
-const currentDir = dirname(fileURLToPath(import.meta.url));
-const scriptsDir = join(currentDir, "..", "scripts");
 const cacheHeader =
   "public, max-age=300, s-maxage=300, stale-while-revalidate=86400";
+const installSh = readFileSync(
+  join(process.cwd(), "scripts", "install.sh"),
+  "utf8",
+);
+const installPs1 = readFileSync(
+  join(process.cwd(), "scripts", "install.ps1"),
+  "utf8",
+);
+const uninstallSh = readFileSync(
+  join(process.cwd(), "scripts", "uninstall.sh"),
+  "utf8",
+);
+const uninstallPs1 = readFileSync(
+  join(process.cwd(), "scripts", "uninstall.ps1"),
+  "utf8",
+);
 
 const scriptRoutes = {
   "/install.sh": {
-    file: "install.sh",
+    body: installSh,
     type: "text/x-shellscript; charset=utf-8",
   },
   "/install.ps1": {
-    file: "install.ps1",
+    body: installPs1,
     type: "text/plain; charset=utf-8",
   },
   "/uninstall.sh": {
-    file: "uninstall.sh",
+    body: uninstallSh,
     type: "text/x-shellscript; charset=utf-8",
   },
   "/uninstall.ps1": {
-    file: "uninstall.ps1",
+    body: uninstallPs1,
     type: "text/plain; charset=utf-8",
   },
 };
 
 for (const [route, script] of Object.entries(scriptRoutes)) {
-  app.get(route, async (_request, response, next) => {
-    try {
-      const body = await readFile(join(scriptsDir, script.file), "utf8");
-      response
-        .status(200)
-        .set("Cache-Control", cacheHeader)
-        .type(script.type)
-        .send(body);
-    } catch (error) {
-      next(error);
-    }
+  app.get(route, (_request, response) => {
+    response
+      .status(200)
+      .set("Cache-Control", cacheHeader)
+      .type(script.type)
+      .send(script.body);
   });
 }
 

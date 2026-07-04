@@ -4,11 +4,6 @@
   "installCommand": "bun install",
   "buildCommand": null,
   "outputDirectory": null,
-  "functions": {
-    "src/index.js": {
-      "includeFiles": "scripts/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/:path*",

@@ -40,7 +40,7 @@ The local server defaults to `http://localhost:3000`.
 
 This repository is intended to deploy as a standalone Vercel project for `get.rpath.dev`.
 
-`vercel.json` routes all requests to `src/index.js` and includes the `scripts/` directory in the function bundle.
+`src/index.js` is the Express entrypoint Vercel detects. `vercel.json` keeps the project on the generic framework preset, applies script response headers, and rewrites incoming paths to the Express app.
 
 ## Release Safety
 
