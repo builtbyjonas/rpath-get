@@ -8,15 +8,55 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-if ([string]::IsNullOrWhiteSpace($InstallWrappers)) {
-  $InstallWrappers = "ask"
+function Get-TextOrDefault {
+  param([object]$Value, [string]$Default)
+  $text = [string]$Value
+  if ([string]::IsNullOrWhiteSpace($text)) {
+    return $Default
+  }
+  $text
 }
-$InstallWrappers = $InstallWrappers.ToLowerInvariant()
+
+function Get-LocalAppData {
+  $path = [string]$env:LOCALAPPDATA
+  if (-not [string]::IsNullOrWhiteSpace($path)) {
+    return $path
+  }
+
+  $path = [Environment]::GetFolderPath("LocalApplicationData")
+  if (-not [string]::IsNullOrWhiteSpace($path)) {
+    return $path
+  }
+
+  $userProfile = [string]$env:USERPROFILE
+  if (-not [string]::IsNullOrWhiteSpace($userProfile)) {
+    return (Join-Path $userProfile "AppData\Local")
+  }
+
+  throw "could not resolve LOCALAPPDATA"
+}
+
+function Get-RoamingAppData {
+  $path = [string]$env:APPDATA
+  if (-not [string]::IsNullOrWhiteSpace($path)) {
+    return $path
+  }
+
+  $path = [Environment]::GetFolderPath("ApplicationData")
+  if (-not [string]::IsNullOrWhiteSpace($path)) {
+    return $path
+  }
+
+  return $null
+}
+
+$InstallWrappers = (Get-TextOrDefault $InstallWrappers "ask").ToLowerInvariant()
 if (@("ask", "yes", "no", "all") -notcontains $InstallWrappers) {
   throw "-InstallWrappers must be one of: ask, yes, no, all"
 }
 
-$defaultRoot = Join-Path (Join-Path $env:LOCALAPPDATA "Programs") "rpath"
+$localAppData = Get-LocalAppData
+$defaultRoot = Join-Path (Join-Path $localAppData "Programs") "rpath"
 $defaultInstallDir = Join-Path $defaultRoot "bin"
 $defaultMetadataPath = Join-Path $defaultRoot "install.json"
 
@@ -51,7 +91,7 @@ function Test-PathEntry {
     return $false
   }
   foreach ($part in ($PathValue -split ";")) {
-    if ($part.Trim().Equals($Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
+    if ([string]::Equals($part.Trim(), $Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
       return $true
     }
   }
@@ -67,7 +107,7 @@ function Remove-UserPathEntry {
   $parts = @()
   foreach ($part in ($userPath -split ";")) {
     $trimmed = $part.Trim()
-    if ($trimmed.Length -gt 0 -and -not $trimmed.Equals($Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
+    if ($trimmed.Length -gt 0 -and -not [string]::Equals($trimmed, $Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
       $parts += $trimmed
     }
   }
@@ -79,7 +119,7 @@ function Remove-UserPathEntry {
     $processParts = @()
     foreach ($part in ($env:Path -split ";")) {
       $trimmed = $part.Trim()
-      if ($trimmed.Length -gt 0 -and -not $trimmed.Equals($Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
+      if ($trimmed.Length -gt 0 -and -not [string]::Equals($trimmed, $Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
         $processParts += $trimmed
       }
     }
@@ -221,9 +261,10 @@ if (-not $DryRun) {
 }
 
 if ($Purge) {
+  $roamingAppData = Get-RoamingAppData
   $stateDirs = @(
-    (Join-Path $env:APPDATA "rpath"),
-    (Join-Path $env:LOCALAPPDATA "rpath")
+    $(if (-not [string]::IsNullOrWhiteSpace($roamingAppData)) { Join-Path $roamingAppData "rpath" }),
+    $(if (-not [string]::IsNullOrWhiteSpace($localAppData)) { Join-Path $localAppData "rpath" })
   ) | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -Unique
 
   foreach ($stateDir in $stateDirs) {

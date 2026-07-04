@@ -10,16 +10,63 @@ param(
 $ErrorActionPreference = "Stop"
 $Repo = "builtbyjonas/rpath"
 
-if ([string]::IsNullOrWhiteSpace($Version)) {
-  $Version = "latest"
+function Get-TextOrDefault {
+  param([object]$Value, [string]$Default)
+  $text = [string]$Value
+  if ([string]::IsNullOrWhiteSpace($text)) {
+    return $Default
+  }
+  $text
 }
+
+function Get-LocalAppData {
+  $path = [string]$env:LOCALAPPDATA
+  if (-not [string]::IsNullOrWhiteSpace($path)) {
+    return $path
+  }
+
+  $path = [Environment]::GetFolderPath("LocalApplicationData")
+  if (-not [string]::IsNullOrWhiteSpace($path)) {
+    return $path
+  }
+
+  $userProfile = [string]$env:USERPROFILE
+  if (-not [string]::IsNullOrWhiteSpace($userProfile)) {
+    return (Join-Path $userProfile "AppData\Local")
+  }
+
+  throw "could not resolve LOCALAPPDATA"
+}
+
+function Get-RpathArchitecture {
+  $arch = $null
+  try {
+    $runtimeArch = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture
+    if ($null -ne $runtimeArch) {
+      $arch = [string]$runtimeArch
+    }
+  } catch {
+    $arch = $null
+  }
+
+  if ([string]::IsNullOrWhiteSpace([string]$arch)) {
+    $arch = [string]$env:PROCESSOR_ARCHITEW6432
+  }
+  if ([string]::IsNullOrWhiteSpace([string]$arch)) {
+    $arch = [string]$env:PROCESSOR_ARCHITECTURE
+  }
+  if ([string]::IsNullOrWhiteSpace([string]$arch)) {
+    throw "could not detect Windows architecture"
+  }
+
+  ([string]$arch).ToLowerInvariant()
+}
+
+$Version = Get-TextOrDefault $Version "latest"
 if ([string]::IsNullOrWhiteSpace($InstallDir)) {
-  $InstallDir = Join-Path (Join-Path $env:LOCALAPPDATA "Programs") "rpath\bin"
+  $InstallDir = Join-Path (Join-Path (Get-LocalAppData) "Programs") "rpath\bin"
 }
-if ([string]::IsNullOrWhiteSpace($InstallWrappers)) {
-  $InstallWrappers = "ask"
-}
-$InstallWrappers = $InstallWrappers.ToLowerInvariant()
+$InstallWrappers = (Get-TextOrDefault $InstallWrappers "ask").ToLowerInvariant()
 if (@("ask", "yes", "no", "all") -notcontains $InstallWrappers) {
   throw "-InstallWrappers must be one of: ask, yes, no, all"
 }
@@ -29,10 +76,12 @@ function Resolve-RpathArtifact {
     throw "install.ps1 only supports Windows"
   }
 
-  $arch = [Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString().ToLowerInvariant()
+  $arch = Get-RpathArchitecture
   switch ($arch) {
+    "amd64" { $name = "rpath-windows-x86_64" }
     "x64" { $name = "rpath-windows-x86_64" }
     "arm64" { $name = "rpath-windows-aarch64" }
+    "aarch64" { $name = "rpath-windows-aarch64" }
     default { throw "unsupported Windows architecture: $arch" }
   }
 
@@ -48,7 +97,7 @@ function Get-ReleaseBaseUrl {
   if ($Version -eq "latest") {
     return "https://github.com/$Repo/releases/latest/download"
   }
-  if ($Version.StartsWith("v")) {
+  if (([string]$Version).StartsWith("v")) {
     $tag = $Version
   } else {
     $tag = "v$Version"
@@ -70,7 +119,7 @@ function Test-PathEntry {
     return $false
   }
   foreach ($part in ($PathValue -split ";")) {
-    if ($part.Trim().Equals($Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
+    if ([string]::Equals($part.Trim(), $Entry, [System.StringComparison]::OrdinalIgnoreCase)) {
       return $true
     }
   }
