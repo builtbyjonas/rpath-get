@@ -8,7 +8,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Repo = "builtbyjonas/rpath"
+$Repo = "rpathdev/rpath"
 
 function Get-TextOrDefault {
   param([object]$Value, [string]$Default)

@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 
-repo="builtbyjonas/rpath"
+repo="rpathdev/rpath"
 version="${RPATH_VERSION:-latest}"
 install_dir="${RPATH_INSTALL_DIR:-$HOME/.local/bin}"
 wrappers="${RPATH_INSTALL_WRAPPERS:-ask}"
